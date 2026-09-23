@@ -1,114 +1,100 @@
-# TP1 — Mise en place de l'environnement de travail
+# TP1 — Introduction au Deep Learning
 
-## 1. Objectif
-
-L'objectif de cette première partie du TP est de mettre en place l'environnement de travail nécessaire pour les séances de deep learning.
-
-Cette mise en place comprend :
-
-* l'utilisation de **SLURM** pour accéder aux ressources de calcul ;
-* la réservation d'un GPU avec `srun` ;
-* la soumission de jobs avec `sbatch` ;
-* l'observation et l'annulation des jobs avec `squeue`, `scancel` et `sacct` ;
-* la création d'un environnement Python isolé avec **Mamba** ;
-* l'installation de **PyTorch avec le support CUDA** ;
-* la vérification de l'accès au GPU depuis PyTorch ;
-* la création d'un fichier `environment.yml` permettant de reproduire l'environnement.
+**Étudiant :** Imtiez Mrad
+**Formation :** Télécom SudParis
+**Cours :** CSC8607 — Introduction au Deep Learning
 
 ---
 
-# 2. Utilisation de SLURM
+# Exercice 1 — SLURM
 
-## 2.1 Connexion au cluster
+## 1.1 Connexion au cluster et environnement de travail
 
-L'accès au cluster se fait via SSH. La configuration SSH permet d'utiliser l'alias `tsp-client` pour se connecter au cluster.
+Le travail est réalisé sur le cluster de calcul de Télécom SudParis.
 
-La connexion est effectuée avec :
+Après connexion au cluster, le dépôt du TP est disponible dans :
 
 ```bash
-ssh tsp-client
+~/tp1
 ```
 
-La machine de connexion est un nœud de login. Elle ne doit pas être utilisée pour exécuter des programmes nécessitant beaucoup de ressources.
+L'organisation principale du projet est la suivante :
+
+```text
+tp1/
+├── data/
+├── data2/
+├── runs/
+├── check_gpu.py
+├── train.py
+├── train_tb.py
+├── mlp_model.pth
+├── environment.yml
+└── README.md
+```
+
+Les machines de connexion servent principalement aux opérations légères comme l'édition des fichiers, la compilation ou la soumission des jobs. Les calculs utilisant le GPU doivent être exécutés sur les nœuds de calcul.
+
+`nvidia-smi` lancée directement sur le controller ne fonctionne pas car il ne possède pas de GPU accessible.
 
 ---
 
-## 2.2 Réservation interactive d'un GPU
+## 1.2 Allocation interactive d'un GPU
 
-Pour obtenir des ressources de calcul, j'ai utilisé la commande :
+Une allocation interactive peut être obtenue avec `srun`.
+
+Par exemple :
 
 ```bash
-srun --partition=gpu --gres=gpu:1 --time=01:00:00 --cpus-per-task=1 --mem=8G --pty bash
+srun 
+     --partition=gpu \
+     --gres=gpu:1 \
+     --time=01:00:00 \
+     --cpus-per-task=1 \
+     --mem=8G \
+     --pty bash
 ```
 
-Cette commande demande :
-
-* la partition `gpu` ;
-* 1 GPU ;
-* une durée maximale de 1 heure ;
-* 1 CPU ;
-* 8 Go de mémoire ;
-* un shell interactif avec `--pty bash`.
-
-Une fois le job attribué, le shell est exécuté sur un nœud de calcul possédant le GPU demandé.
-
----
-
-## 2.3 Vérification du GPU avec `nvidia-smi`
-
-Une fois connecté au nœud de calcul, la commande suivante permet de vérifier le GPU attribué :
+Une fois sur le nœud de calcul, la commande suivante permet de vérifier le GPU disponible :
 
 ```bash
 nvidia-smi
 ```
 
-Le GPU qui m'a été attribué est :
+Résultat observé :
 
 ```text
-NVIDIA L4
+GPU: NVIDIA L4
+Memory: 23034 MiB
+Driver Version: 595.84
+CUDA Version: 13.2
 ```
 
-La commande `nvidia-smi` permet notamment de vérifier le modèle du GPU, son utilisation ainsi que sa mémoire disponible.
+Le GPU utilisé pour les expériences est donc une **NVIDIA L4**.
 
 ---
 
-## 2.4 Observation et annulation d'un job
+## 1.3 Gestion des jobs avec `squeue` et `scancel`
 
-Pour afficher mes jobs SLURM en cours, j'ai utilisé :
+La commande suivante permet d'afficher les jobs de l'utilisateur :
 
 ```bash
 squeue -u $USER
 ```
 
-Cette commande permet notamment d'obtenir le `JobID` du job interactif.
-
-### Job interactif
-
-```text
-JobID : TODO
-```
-
-Pour annuler un job, la commande utilisée est :
+Pour annuler un job, on utilise :
 
 ```bash
-scancel MON_JOB_ID
+scancel 1595
 ```
 
-Dans mon cas, la commande exacte utilisée était :
-
-```bash
-scancel TODO
-```
-
-> À compléter avec le véritable JobID utilisé pendant le TP.
+où `1595` correspond à l'identifiant du job affiché par `squeue`.
 
 ---
 
-# 3. Soumission d'un script avec `sbatch`
+## 1.4 Soumission d'un job avec `sbatch`
 
-Pour tester le mode non interactif de SLURM, j'ai créé le fichier `hello.sh`.
-
-Le script demande 1 GPU, 1 CPU et 8 Go de mémoire pendant une heure.
+Un script `hello.sh` a été utilisé pour tester la soumission d'un job SLURM :
 
 ```bash
 #!/bin/bash
@@ -126,337 +112,827 @@ set -euo pipefail
 
 mkdir -p logs
 
-echo "Job $SLURM_JOB_ID on $SLURM_NODELIST"
+echo "Job ID: $SLURM_JOB_ID"
+echo "Node: $(hostname)"
+date
 
-nvidia-smi || echo "nvidia-smi indisponible"
+nvidia-smi || echo "nvidia-smi unavailable"
 
 echo "Bonjour depuis SLURM !"
 ```
 
-Le script est soumis avec :
+Le job a été soumis avec :
 
 ```bash
 sbatch hello.sh
 ```
 
-SLURM exécute alors le script indépendamment du terminal interactif.
+Le job obtenu était le **job 1596**.
 
-Les sorties standard sont enregistrées dans le répertoire `logs/`.
-
-Le nom du fichier de log généré est :
+Le fichier de sortie généré est :
 
 ```text
-TODO
+logs/hello-slurm-1596.out
 ```
 
-> À compléter avec le nom exact obtenu dans `logs/`, par exemple `hello-slurm-XXXX.out`.
-
-Le format du nom est défini par :
+Le job a été exécuté sur :
 
 ```text
-logs/%x-%j.out
+starfighter-slurm-node-04-1
 ```
 
-où `%x` correspond au nom du job et `%j` à son JobID.
+La sortie contient notamment les informations du GPU NVIDIA L4 ainsi que :
+
+```text
+Bonjour depuis SLURM !
+```
+
+Le job s'est terminé avec l'état :
+
+```text
+COMPLETED
+```
+
+Le fichier d'erreur associé ne contient pas d'erreur significative.
 
 ---
 
-# 4. Analyse des jobs avec `sacct`
+## 1.5 Consultation des ressources utilisées avec `sacct`
 
-Pour consulter l'historique d'un job terminé, la commande utilisée est :
+La commande utilisée pour consulter les jobs est :
 
 ```bash
-sacct -j MON_JOB_ID --format=JobID,State,Elapsed,MaxRSS,ReqMem,ReqCPUS
+sacct -u imrad \
+      --starttime=2026-09-15 \
+      --format=JobID,Partition,State,Elapsed,MaxRSS,ReqMem,ReqCPUS
 ```
 
-Cette commande permet notamment de connaître :
 
-* l'état du job ;
-* sa durée d'exécution ;
-* la mémoire réellement utilisée ;
-* la mémoire demandée ;
-* le nombre de CPUs demandés.
-
-## Différence entre `ReqMem` et `MaxRSS`
-
-`ReqMem` correspond à la quantité de mémoire **demandée lors de la réservation du job**.
-
-`MaxRSS` correspond à la quantité maximale de mémoire **réellement utilisée par le job**.
-
-Par exemple, si un job demande 8 Go mais n'utilise au maximum que 2 Go :
-
-```text
-ReqMem = 8G
-MaxRSS = environ 2G
-```
-
-Ainsi, `ReqMem` décrit la ressource réservée tandis que `MaxRSS` permet d'observer la consommation réelle maximale de mémoire.
+`ReqMem` correspond à la quantité de mémoire demandée lors de la soumission du job, tandis que `MaxRSS` correspond à la quantité maximale de mémoire effectivement utilisée pendant son exécution.
 
 ---
 
-# 5. Transfert de fichiers
+# Exercice 2 — Environnement Python et GPU
 
-Les commandes `scp` et `rsync` permettent de transférer des fichiers entre ma machine et le cluster.
+## 2.1 Création de l'environnement
 
-## 5.1 Machine → cluster
+L'environnement Python utilisé pour le TP est `deeplearning`.
 
-Pour envoyer un fichier vers le cluster :
-
-```bash
-scp ./mnist.zip tsp-client:~/data/
-```
-
-Le fichier local `mnist.zip` est alors copié dans :
-
-```text
-~/data/mnist.zip
-```
-
-sur le cluster.
-
----
-
-## 5.2 Cluster → machine
-
-Pour récupérer un fichier depuis le cluster :
-
-```bash
-scp tsp-client:~/results/output.log ./output.log
-```
-
-Le fichier distant :
-
-```text
-~/results/output.log
-```
-
-est copié dans le répertoire courant de ma machine sous le nom :
-
-```text
-output.log
-```
-
----
-
-## 5.3 Synchronisation avec `rsync`
-
-Pour synchroniser un dossier local avec un dossier distant :
-
-```bash
-rsync -avhP ./results/ tsp-client:~/backup-results/
-```
-
-`rsync` permet notamment d'éviter de retransférer inutilement les fichiers qui n'ont pas changé.
-
----
-
-# 6. Création de l'environnement Python
-
-## 6.1 Création de l'environnement
-
-Un environnement dédié au cours a été créé avec Mamba :
+Création de l'environnement :
 
 ```bash
 mamba create -n deeplearning python=3.10
 ```
 
-Puis il a été activé avec :
+Activation :
 
 ```bash
 mamba activate deeplearning
 ```
 
-Cet environnement permet d'isoler les dépendances du TP du reste du système.
-
----
-
-## 6.2 Vérification de Python
-
-Pour vérifier la version de Python utilisée ainsi que le chemin du binaire :
+Pour initialiser correctement `mamba` dans le shell :
 
 ```bash
-python --version
-which python
+source ~/miniforge3/etc/profile.d/conda.sh
+eval "$(mamba shell hook --shell bash)"
 ```
 
-Résultat :
+La version utilisée est :
 
 ```text
 Python 3.10.21
 ```
 
-Chemin du binaire :
+Le Python utilisé correspond à celui de l'environnement :
 
 ```text
-/mnt/hdd/homes/imrad/miniforge3/envs/deeplearning/bin/python
+~/miniforge3/envs/deeplearning/bin/python
 ```
-
-L'environnement utilise donc bien Python 3.10 et le binaire provient de l'environnement `deeplearning`.
 
 ---
 
-# 7. Installation de PyTorch et CUDA
+## 2.2 Vérification de PyTorch et du GPU
 
-PyTorch a été installé avec le support CUDA à l'aide de Mamba.
-
-Les composants principaux de l'environnement sont notamment :
-
-```text
-PyTorch        2.5.1
-torchvision    0.20.1
-pytorch-cuda   12.1
-Python         3.10.21
-```
-
-L'environnement utilise CUDA 12.1 côté runtime PyTorch.
-
-Le GPU du nœud de calcul est une NVIDIA L4.
-
----
-
-# 8. Vérification de PyTorch et CUDA
-
-Le fichier `check_gpu.py` contient :
+Le script `check_gpu.py` permet de vérifier la disponibilité de CUDA :
 
 ```python
 import torch
 
-print("PyTorch version:", torch.__version__)
+print("PyTorch:", torch.__version__)
+print("CUDA available:", torch.cuda.is_available())
+print("Device count:", torch.cuda.device_count())
 
-gpu_available = torch.cuda.is_available()
-
-print("CUDA available:", gpu_available)
-
-if gpu_available:
-    print("Device count:", torch.cuda.device_count())
-    print("Device 0 name:", torch.cuda.get_device_name(0))
-else:
-    print("Attention, aucun GPU détecté !")
+if torch.cuda.is_available():
+    print("Device:", torch.cuda.get_device_name(0))
 ```
 
-Il est exécuté avec :
-
-```bash
-python check_gpu.py
-```
-
-### Résultat
+Résultat :
 
 ```text
-TODO
-```
-
-> Coller ici la sortie réelle obtenue avec `python check_gpu.py`.
-
-Le résultat attendu lorsque l'environnement est correctement configuré est notamment :
-
-```text
-PyTorch version: 2.5.1
+PyTorch: 2.5.1+cu121
 CUDA available: True
 Device count: 1
-Device 0 name: NVIDIA L4
+Device: NVIDIA L4
+```
+
+PyTorch détecte donc correctement le GPU.
+
+---
+
+## 2.3 Installation de PyTorch et CUDA
+
+L'environnement utilise notamment :
+
+```text
+PyTorch 2.5.1+cu121
+CUDA 12.1
+```
+
+La version CUDA utilisée par PyTorch peut être vérifiée avec :
+
+```python
+import torch
+
+print(torch.version.cuda)
+print(torch.cuda.is_available())
+```
+
+Résultat :
+
+```text
+12.1
+True
+```
+
+Il faut distinguer cette version CUDA utilisée par PyTorch de la version CUDA affichée par `nvidia-smi`, qui correspond à la compatibilité maximale supportée par le driver installé sur le nœud.
+
+---
+
+## 2.4 Vérification de l'accélération GPU
+
+Lorsque CUDA est disponible, le modèle peut être déplacé sur le GPU avec :
+
+```python
+device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+```
+
+Dans notre environnement :
+
+```text
+CUDA available: True
+Device count: 1
+NVIDIA L4
+```
+
+Le GPU peut donc être utilisé pour l'entraînement des réseaux de neurones.
+
+---
+
+## 2.5 Fichier `environment.yml`
+
+Les principales dépendances de l'environnement sont définies dans `environment.yml`.
+
+L'environnement utilise notamment :
+
+```yaml
+name: deeplearning
+
+dependencies:
+  - python=3.10
+  - pytorch
+  - pytorch-cuda=12.1
+  - tensorboard
+  - torchaudio
+  - torchvision
 ```
 
 ---
 
-## Si `CUDA available` vaut `False`
+## 2.6 TensorBoard
 
-Deux causes possibles sont par exemple :
+La version de TensorBoard utilisée est :
 
-1. le programme est exécuté sur la machine de connexion au lieu d'un nœud de calcul disposant d'un GPU ;
-2. PyTorch a été installé avec une version ne disposant pas du support CUDA ou l'environnement CUDA/PyTorch est mal configuré.
-
-Il faut donc notamment vérifier que le programme est exécuté dans une allocation SLURM possédant un GPU et que `torch.cuda.is_available()` retourne `True`.
+```text
+TensorBoard 2.20.0
+```
 
 ---
 
-# 9. Reproductibilité de l'environnement
+# Exercice 3 — Réseaux de neurones et rétropropagation
+![Architecture du MLP](mlp.png)
 
-Pour enregistrer les dépendances principales de l'environnement, la commande suivante a été utilisée :
+## 3.1 Nombre de paramètres d'un MLP
 
-```bash
-mamba env export --from-history -n deeplearning > environment.yml
+On considère un MLP composé de :
+
+```text
+3 → 4 → 2
+```
+
+La première couche contient :
+
+$$
+3 \times 4 = 12
+$$
+
+poids.
+
+La deuxième couche contient :
+
+$$
+4 \times 2 = 8
+$$
+
+poids.
+
+Le nombre total de poids est donc :
+
+$$
+12 + 8 = 20
+$$
+
+En ajoutant les biais :
+
+* première couche : 4 biais ;
+* deuxième couche : 2 biais.
+
+On obtient donc :
+
+$$
+20 + 4 + 2 = 26
+$$
+
+paramètres.
+
+---
+
+## 3.2 Propagation avant
+
+Pour un MLP avec une couche cachée, la propagation avant peut s'écrire :
+
+$$
+h = f(W_1x+b_1)
+$$
+
+puis :
+
+$$
+y = W_2h+b_2
+$$
+
+Pour un vecteur d'entrée de dimension 3 :
+
+$$
+x \in \mathbb{R}^{3}
+$$
+
+avec une couche cachée de dimension 4 :
+
+$$
+h \in \mathbb{R}^{4}
+$$
+
+et une sortie de dimension 2 :
+
+$$
+y \in \mathbb{R}^{2}
+$$
+
+Les dimensions des matrices sont donc :
+
+$$
+W_1 \in \mathbb{R}^{4\times3}
+$$
+
+et
+
+$$
+W_2 \in \mathbb{R}^{2\times4}
+$$
+
+---
+
+## 3.3 Calcul des gradients
+
+On considère :
+
+$$
+f(x,y,z)=\frac{x}{y}+z
+$$
+
+avec :
+
+$$
+q=\frac{x}{y}
+$$
+
+Pour :
+
+$$
+x=2,\quad y=4,\quad z=0
+$$
+
+on obtient :
+
+$$
+q=\frac{2}{4}=0.5
+$$
+
+et donc :
+
+$$
+f=0.5
+$$
+
+Les dérivées sont :
+
+$$
+\frac{\partial f}{\partial x}=\frac{1}{y}
+$$
+
+$$
+\frac{\partial f}{\partial y}=-\frac{x}{y^2}
+$$
+
+$$
+\frac{\partial f}{\partial z}=1
+$$
+
+Ainsi :
+
+$$
+\frac{\partial f}{\partial x}=0.25
+$$
+
+$$
+\frac{\partial f}{\partial y}=-0.125
+$$
+
+$$
+\frac{\partial f}{\partial z}=1
+$$
+
+---
+
+## 3.4 Mise à jour par descente de gradient
+
+Avec un taux d'apprentissage :
+
+$$
+\eta=1
+$$
+
+la mise à jour est :
+
+$$
+x'=x-\eta\frac{\partial f}{\partial x}
+$$
+
+$$
+y'=y-\eta\frac{\partial f}{\partial y}
+$$
+
+$$
+z'=z-\eta\frac{\partial f}{\partial z}
+$$
+
+On obtient :
+
+$$
+x'=2-0.25=1.75
+$$
+
+$$
+y'=4-(-0.125)=4.125
+$$
+
+$$
+z'=0-1=-1
+$$
+
+Après la mise à jour :
+
+$$
+f'=\frac{1.75}{4.125}-1\approx -0.5758
+$$
+
+---
+
+## 3.5 Rétropropagation et mini-batches
+
+La rétropropagation permet de calculer les gradients des paramètres du réseau en appliquant la règle de la chaîne depuis la fonction de perte jusqu'aux différentes couches.
+
+Pour un mini-batch, le gradient utilisé pour mettre à jour les paramètres est généralement calculé à partir de l'ensemble des exemples du batch.
+
+Cela permet de trouver un compromis entre :
+
+* le calcul sur un seul exemple, très bruité ;
+* le calcul sur l'ensemble du dataset, plus coûteux.
+
+---
+
+## 3.6 Type de tâche, sortie et fonction de perte
+
+| Tâche                        | Sortie du réseau   | Fonction de perte    |
+| ---------------------------- | ------------------ | -------------------- |
+| Classification binaire       | 1 logit            | Binary Cross Entropy |
+| Classification multi-classes | 1 logit par classe | Cross Entropy        |
+| Régression                   | Valeur continue    | MSE                  |
+
+Pour la classification multi-classes utilisée avec CIFAR-10, le réseau produit un logit par classe et utilise `CrossEntropyLoss`.
+
+---
+
+# Exercice 4 — Premier réseau de neurones
+
+## 4.1 Chargement de CIFAR-10
+
+Le dataset utilisé est **CIFAR-10**.
+
+Il contient :
+
+* 50 000 images d'entraînement ;
+* 10 000 images de test ;
+* 10 classes ;
+* des images RGB de taille `32 × 32`.
+
+Les images sont normalisées avant d'être fournies au réseau.
+
+Les `DataLoader` utilisés sont configurés avec :
+
+```python
+batch_size = 32
+```
+
+Pour l'entraînement :
+
+```python
+shuffle=True
+```
+
+Pour le test :
+
+```python
+shuffle=False
+```
+
+Le mélange des données d'entraînement permet d'éviter que le réseau voie toujours les exemples dans le même ordre.
+
+---
+
+## 4.2 Architecture du MLP
+
+Les images CIFAR-10 ont une dimension :
+
+$$
+32\times32\times3=3072
+$$
+
+L'image est donc aplatie avant d'être donnée au MLP.
+
+L'architecture utilisée est :
+
+```text
+3072 → 128 → 10
+```
+
+avec :
+
+* 3072 neurones d'entrée ;
+* 128 neurones dans la couche cachée ;
+* 10 sorties correspondant aux 10 classes de CIFAR-10.
+
+
+La sortie finale contient directement les logits.
+
+Il ne faut donc pas appliquer de `Softmax` avant `CrossEntropyLoss`, car `CrossEntropyLoss` applique déjà la transformation nécessaire en interne.
+
+---
+
+## 4.3 Entraînement du premier MLP
+
+Le modèle est entraîné avec :
+
+```python
+device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+model = model.to(device)
+```
+
+La fonction de perte utilisée est :
+
+```python
+criterion = nn.CrossEntropyLoss()
+```
+
+L'optimiseur est :
+
+```python
+optimizer = torch.optim.SGD(
+    model.parameters(),
+    lr=0.01,
+    momentum=0.9
+)
+```
+
+L'entraînement est réalisé pendant 10 epochs.
+
+Les résultats obtenus sont présentés dans la capture suivante :
+
+![Résultats de l'entraînement](cap.png)
+
+Les principales étapes d'une itération d'entraînement sont :
+
+```python
+optimizer.zero_grad()
+outputs = model(images)
+loss = criterion(outputs, labels)
+loss.backward()
+optimizer.step()
+```
+
+`zero_grad()` remet les gradients à zéro.
+
+`backward()` calcule les gradients par rétropropagation.
+
+`step()` met à jour les paramètres du modèle.
+
+---
+
+## 4.4 Évaluation sur le jeu de test
+
+Après l'entraînement, le modèle est placé en mode évaluation :
+
+```python
+model.eval()
+```
+
+Puis les gradients sont désactivés :
+
+```python
+with torch.no_grad():
+    ...
+```
+
+Cela permet de réduire la consommation mémoire et d'éviter de construire le graphe de calcul nécessaire à la rétropropagation.
+
+Pour CIFAR-10, une classification aléatoire donnerait environ :
+
+$$
+\frac{1}{10}=10\%
+$$
+
+de précision.
+
+---
+
+## 4.5 Sauvegarde du modèle
+
+Le modèle peut être sauvegardé avec :
+
+```python
+torch.save(model.state_dict(), "mlp_model.pth")
 ```
 
 Le fichier obtenu est :
 
 ```text
-environment.yml
+mlp_model.pth
 ```
 
-Il est placé dans le répertoire `TP1` et ajouté au dépôt Git.
+Il peut ensuite être rechargé avec :
 
-Ce fichier permet de conserver une description reproductible des dépendances utilisées pour le TP.
+```python
+model.load_state_dict(torch.load("mlp_model.pth"))
+```
 
 ---
 
-# 10. Vérification de TensorBoard
+# Exercice 5 — TensorBoard
 
-TensorBoard a été installé avec :
+## 5.1 Organisation des runs
 
-```bash
-mamba install tensorboard -c conda-forge
-```
+Pour identifier facilement les différentes expériences, le nom des runs contient notamment :
 
-La commande permettant normalement d'afficher sa version est :
+* le type de modèle ;
+* le batch size ;
+* le learning rate ;
+* la date et l'heure.
 
-```bash
-tensorboard --version
-```
-
-Dans mon environnement, cette commande a rencontré l'erreur suivante :
+Par exemple :
 
 ```text
-ModuleNotFoundError: No module named 'pkg_resources'
+runs/MLP/bs32_lr0.001_20260920-104126
 ```
-
-Bien que TensorBoard soit installé dans l'environnement, son lancement avec cette commande rencontre donc actuellement un problème de dépendance lié à `pkg_resources`.
-
-Version installée de TensorBoard :
-
-```text
-2.20.0
-```
-
-Ce problème sera corrigé avant l'utilisation de TensorBoard dans la suite du TP.
 
 ---
 
-# 11. Fichiers créés à ce stade
+## 5.2 Métriques enregistrées
 
-À ce stade du TP, le répertoire `TP1` contient notamment :
+Les métriques suivantes sont enregistrées avec TensorBoard :
 
 ```text
-TP1/
-├── rapport.md
-├── hello.sh
+Loss/train
+Loss/train_step
+Loss/val
+Accuracy/val
+```
+
+Une séparation de 90 % / 10 % est utilisée pour obtenir respectivement les données d'entraînement et de validation.
+
+La seed utilisée est :
+
+```text
+seed = 0
+```
+
+Le lissage utilisé dans TensorBoard est :
+
+```text
+smoothing = 0.6
+```
+
+---
+
+## 5.3 Mini-sweep d'hyperparamètres
+
+Trois entraînements ont été réalisés.
+
+### Run 1
+
+Configuration :
+
+```text
+Model: MLP
+Batch size: 32
+Learning rate: 0.01
+Seed: 0
+Weight decay: 0
+```
+
+Répertoire :
+
+```text
+runs/MLP/bs32_lr0.01_20260920-083441
+```
+
+Les courbes correspondantes sont disponibles dans TensorBoard.
+
+---
+
+### Run 2
+
+Configuration :
+
+```text
+Model: MLP
+Batch size: 32
+Learning rate: 0.001
+Seed: 0
+Weight decay: 0
+```
+
+Répertoire :
+
+```text
+runs/MLP/bs32_lr0.001_20260920-104126
+```
+
+Résultats :
+
+| Epoch | Train Loss | Validation Loss | Validation Accuracy |
+| ----: | ---------: | --------------: | ------------------: |
+|     1 |     1.6846 |          1.5960 |             43.82 % |
+|     2 |     1.4892 |          1.5229 |             47.26 % |
+|     3 |     1.4014 |          1.5360 |             47.28 % |
+|     4 |     1.3404 |          1.4770 |             48.68 % |
+|     5 |     1.2894 |          1.4683 |             49.64 % |
+|     6 |     1.2477 |          1.4740 |             49.46 % |
+|     7 |     1.2093 |          1.4658 |             49.72 % |
+|     8 |     1.1714 |          1.4712 |             49.88 % |
+|     9 |     1.1391 |          1.4639 |             50.84 % |
+|    10 |     1.1074 |          1.4639 |             51.46 % |
+
+La précision de validation finale est donc de :
+
+```text
+51.46 %
+```
+
+---
+
+### Run 3
+
+Configuration :
+
+```text
+Model: MLP
+Batch size: 128
+Learning rate: 0.1
+Seed: 0
+Weight decay: 0
+```
+
+Répertoire :
+
+```text
+runs/MLP/bs128_lr0.1_20260920-104639
+```
+
+Les pertes d'entraînement et de validation deviennent `NaN`.
+
+La précision de validation reste proche d'une classification aléatoire :
+
+```text
+9.64 %
+```
+
+Cela indique que le learning rate de `0.1` est trop élevé pour cette configuration et entraîne une divergence numérique.
+
+---
+
+## 5.4 Visualisation TensorBoard
+
+Les différents runs peuvent être comparés dans TensorBoard à partir des courbes enregistrées.
+
+Les runs utilisés sont :
+
+```text
+bs32_lr0.01_20260920-083441
+bs32_lr0.001_20260920-104126
+bs128_lr0.1_20260920-104639
+```
+
+Les visualisations obtenues sont  :
+
+
+![scalars](scalars.png)
+
+![accuracy](acc_val.png)
+
+---
+
+## 5.5 Comparaison des résultats
+
+Les trois configurations donnent les résultats suivants :
+
+| Batch size | Learning rate | Validation Accuracy | Observation                                 |
+| ---------: | ------------: | ------------------: | ------------------------------------------- |
+|         32 |          0.01 |              ≈ 38 % | Apprentissage correct mais moins performant |
+|         32 |         0.001 |         **51.46 %** | Meilleure convergence observée              |
+|        128 |           0.1 |              9.64 % | Divergence / pertes `NaN`                   |
+
+Dans les expériences réalisées, la configuration avec un batch size de `32` et un learning rate de `0.001` atteint la meilleure précision de validation observée, avec **51.46 %**.
+
+---
+
+## 5.6 Analyse du surapprentissage
+
+Le surapprentissage peut être observé lorsque la perte d'entraînement continue de diminuer alors que la perte de validation augmente.
+
+Pour le run avec :
+
+```text
+batch size = 32
+learning rate = 0.001
+```
+
+la perte d'entraînement continue de diminuer jusqu'à la fin des 10 epochs :
+
+```text
+Epoch 9 : 1.1391
+Epoch 10 : 1.1074
+```
+
+La perte de validation reste quant à elle pratiquement stable entre les dernières epochs :
+
+```text
+Epoch 9 : 1.4639
+Epoch 10 : 1.4639
+```
+
+On observe donc une amélioration du modèle sur les données d'entraînement qui ne s'accompagne plus d'une amélioration de la perte de validation. Cela peut indiquer un début de surapprentissage ou simplement une stagnation de la généralisation, mais les 10 epochs ne suffisent pas à conclure à un surapprentissage important.
+
+---
+
+# Conclusion
+
+Ce TP a permis de mettre en pratique l'utilisation de **SLURM**, de **PyTorch**, d'un **GPU NVIDIA L4** et de **TensorBoard** pour entraîner et analyser un MLP sur CIFAR-10.
+
+Les expériences montrent notamment l'importance du choix du learning rate : `0.001` permet une convergence stable dans notre configuration, tandis que `0.1` entraîne une divergence avec des pertes `NaN`.
+
+---
+
+# Fichiers principaux
+
+```text
+tp1/
+├── data/
+├── data2/
+├── runs/
 ├── check_gpu.py
+├── train.py
+├── train_tb.py
+├── mlp_model.pth
 ├── environment.yml
-└── logs/
-    └── TODO
+└── README.md
 ```
-
-Les fichiers sont ajoutés progressivement au dépôt Git conformément aux modalités du TP.
-
----
-
-# 12. Bilan
-
-Cette première partie a permis de mettre en place l'environnement nécessaire pour les prochains exercices.
-
-J'ai notamment appris à :
-
-* réserver des ressources avec `srun` ;
-* obtenir un GPU NVIDIA L4 ;
-* observer mes jobs avec `squeue` ;
-* annuler un job avec `scancel` ;
-* soumettre un script avec `sbatch` ;
-* consulter l'historique avec `sacct` ;
-* transférer des fichiers avec `scp` ;
-* synchroniser des dossiers avec `rsync` ;
-* créer un environnement Python avec Mamba ;
-* installer PyTorch et CUDA ;
-* vérifier la disponibilité du GPU depuis PyTorch ;
-* exporter l'environnement dans `environment.yml`.
-
-La suite du TP portera sur les notions théoriques des réseaux de neurones puis sur l'entraînement d'un MLP sur CIFAR-10.
