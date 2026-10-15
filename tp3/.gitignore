@@ -1,0 +1,23 @@
+
+# Python
+__pycache__/
+*.pyc
+
+# Model checkpoints
+checkpoints/
+*.pth
+*.pt
+
+# TensorBoard
+runs/
+events.out.tfevents.*
+
+# Logs temporaires
+*.log
+logs/*.err
+
+# Données volumineuses
+*.tar
+*.zip
+*.csv
+*.npy
