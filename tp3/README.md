@@ -1,8 +1,8 @@
-# CSC8607 — Introduction au Deep Learning
+# CSC8607 - Introduction au Deep Learning
 
-## TP3 — Réseaux convolutifs (CNN)
+## TP3 - Réseaux convolutifs (CNN)
 
-# Exercice 1 — Préparation d'ImageNet et augmentation de données
+# Exercice 1 - Préparation d'ImageNet et augmentation de données
 
 ## 1.1 Prétraitement des images
 
@@ -45,7 +45,7 @@ pour assurer la reproductibilité des expériences.
 
 ## 1.3 Questions théoriques
 
-### Question 1 — Importance de la normalisation
+### Question 1 - Importance de la normalisation
 
 Sans normalisation, les valeurs des pixels ne sont pas centrées et peuvent avoir des distributions différentes selon les canaux. Cela peut produire des gradients mal équilibrés, ralentir la convergence et rendre l'entraînement moins stable.
 
@@ -57,13 +57,13 @@ x' = \frac{x-\mu}{\sigma}
 
 Les statistiques doivent être calculées uniquement sur les données d'entraînement afin d'éviter toute fuite d'information provenant des données de validation ou de test.
 
-### Question 2 — Augmentation de données et validation
+### Question 2 - Augmentation de données et validation
 
 Pendant l'entraînement, `RandomResizedCrop` et `RandomHorizontalFlip` introduisent des variations aléatoires des images. Cela permet d'améliorer la généralisation du modèle et de limiter le surapprentissage.
 
 Pour la validation, `Resize` et `CenterCrop` produisent des images de manière déterministe, afin d'évaluer les performances du modèle dans des conditions identiques à chaque époque.
 
-### Question 3 — Cas où RandomHorizontalFlip est néfaste
+### Question 3 - Cas où RandomHorizontalFlip est néfaste
 
 Un exemple est la classification des chiffres manuscrits. Un retournement horizontal peut modifier la forme d'un chiffre et rendre son étiquette incorrecte.
 
@@ -72,9 +72,9 @@ Dans ce cas, cette augmentation peut introduire des données incohérentes et d�
 # Exercice 2 Étude théorique et implémentation des architectures (MLP vs AlexNet)
 
 
-## 2.1 — Implémentation du MLP
+## 2.1 - Implémentation du MLP
 
-### Question 1 — Calcul du nombre de paramètres
+### Question 1 - Calcul du nombre de paramètres
 
 Pour une couche `Linear`, le nombre de paramètres avec biais est :
 
@@ -92,9 +92,9 @@ Le MLP contient trois couches entièrement connectées :
 
 | Couche | Avec biais | Sans biais |
 |---|---:|---:|
-| Linear1 (154 587 → 256) | 39 574 528 | 39 574 272 |
-| Linear2 (256 → 256) | 65 792 | 65 536 |
-| Linear3 (256 → 1 000) | 257 000 | 256 000 |
+| Linear1 (154 587 -> 256) | 39 574 528 | 39 574 272 |
+| Linear2 (256 -> 256) | 65 792 | 65 536 |
+| Linear3 (256 -> 1 000) | 257 000 | 256 000 |
 | **Total** | **39 897 320** | **39 896 808** |
 
 Le nombre total de paramètres calculé théoriquement est **39 897 320**, ce qui correspond au résultat obtenu avec PyTorch.
@@ -113,7 +113,7 @@ Output shape : torch.Size([2, 1000])
 
 Le modèle reçoit un batch de 2 images RGB de taille 227 × 227 et produit 1 000 scores par image, correspondant aux classes d'ImageNet.
 
-### Question 2 — Défaut structurel du MLP
+### Question 2 - Défaut structurel du MLP
 
 Le principal défaut du MLP est qu'il traite l'image comme un vecteur de pixels, sans exploiter explicitement les relations spatiales entre pixels voisins.
 
@@ -121,10 +121,10 @@ Contrairement aux CNN, il ne possède pas de mécanisme de convolution permettan
 
 Cela rend le modèle moins adapté à la classification d'images et nécessite un grand nombre de paramètres.
 
-# 2.2 — Analyse et implémentation d'AlexNet
+# 2.2 - Analyse et implémentation d'AlexNet
 
 
-### Question 1 — Dimensions, paramètres et mémoire des activations
+### Question 1 - Dimensions, paramètres et mémoire des activations
 
 Pour une couche convolutive, la dimension spatiale de sortie est calculée par :
 
@@ -186,7 +186,7 @@ Output shape: torch.Size([1, 1000])
 
 Les résultats expérimentaux correspondent aux calculs théoriques.
 
-### Question 2 — Répartition des paramètres et des activations
+### Question 2 - Répartition des paramètres et des activations
 
 Dans AlexNet, l'essentiel des paramètres se concentre dans les couches entièrement connectées (Linear), particulièrement Linear1 et Linear2.
 
@@ -194,7 +194,7 @@ En revanche, la mémoire des activations est principalement consommée par les p
 
 Ainsi, les couches Linear concentrent les poids, tandis que les premières convolutions concentrent les activations.
 
-### Question 3 — Comparaison de la mémoire des activations avec le MLP
+### Question 3 - Comparaison de la mémoire des activations avec le MLP
 
 Pour le MLP, les activations de sortie des trois couches Linear occupent :
 
@@ -213,8 +213,8 @@ Cette comparaison porte sur les sorties intermédiaires, sans compter l'image d'
 
 
 
-# Exercice 3 — Boucle d'entraînement, Early Stopping et Comparaison rapide
-## 3.1 — Entraînement et comparaison du MLP et d'AlexNet
+# Exercice 3 - Boucle d'entraînement, Early Stopping et Comparaison rapide
+## 3.1 - Entraînement et comparaison du MLP et d'AlexNet
 
 Les deux modèles ont été entraînés successivement sur un sous-ensemble d'ImageNet avec les paramètres suivants :
 
@@ -229,7 +229,7 @@ Les deux modèles ont été entraînés successivement sur un sous-ensemble d'Im
 
 Les deux modèles ont terminé les 10 époques sans déclenchement de l'Early Stopping.
 
-### Question 1 — Rôle de model.train() et model.eval()
+### Question 1 - Rôle de model.train() et model.eval()
 
 `model.train()` active le mode entraînement. Dans AlexNet, les couches Dropout désactivent aléatoirement des neurones avec une probabilité de 0.5 afin de limiter le surapprentissage.
 
@@ -237,7 +237,7 @@ Les deux modèles ont terminé les 10 époques sans déclenchement de l'Early St
 
 Sans `model.eval()`, le Dropout resterait actif pendant la validation, ce qui introduirait de l'aléatoire dans les prédictions et rendrait les métriques moins stables et moins représentatives des performances réelles du modèle en inférence.
 
-### Question 2 — Accuracy et CrossEntropyLoss théoriques
+### Question 2 - Accuracy et CrossEntropyLoss théoriques
 
 ImageNet contient 1000 classes.
 
@@ -264,7 +264,7 @@ Les résultats de la première époque sont globalement cohérents avec les vale
 
 Le MLP commence avec une loss plus élevée, tandis qu'AlexNet présente déjà une légère amélioration de la validation loss.
 
-### Question 3 — Comparaison des performances
+### Question 3 - Comparaison des performances
 
 Résultats des entraînements :
 
@@ -310,7 +310,7 @@ Les courbes suivantes présentent les évolutions des losses et accuracies d'ent
 
 ![Comparaison accuracy TensorBoard MLP et AlexNet](images/img/accuracy.png)
 ![Comparaison loss TensorBoard MLP et AlexNet](images/img/loss.png)
-## 3.2 — Impact de la profondeur
+## 3.2 - Impact de la profondeur
 
 Nous avons ajouté trois couches convolutives supplémentaires
 à AlexNet, après Conv5 et avant MaxPool3.
@@ -336,7 +336,7 @@ batch size 32 et 20 000 images d'entraînement.
 | Meilleure Val Accuracy | 1.68 % | 0.18 % |
 | Early Stopping | Non | Époque 6 |
 
-### Question — Impact de la profondeur et propagation du gradient
+### Question - Impact de la profondeur et propagation du gradient
 
 L'ajout de trois couches convolutives dégrade fortement
 l'apprentissage du modèle.
@@ -380,9 +380,9 @@ n'ont pas été mesurées.
 ![Comparaison AlexNet et AlexNetDeep](images/img/deep.png)
 
 
-# Exercice 4 — Lancement et analyse d'un entraînement long avec Slurm
+# Exercice 4 - Lancement et analyse d'un entraînement long avec Slurm
 
-## 4.1 — Configuration de l'entraînement
+## 4.1 - Configuration de l'entraînement
 
 Un entraînement d'AlexNet a été lancé sur l'intégralité du dataset ImageNet (environ 1,28 million d'images d'entraînement), à l'aide d'un job Slurm exécuté en arrière-plan.
 
@@ -408,7 +408,7 @@ Un entraînement d'AlexNet a été lancé sur l'intégralité du dataset ImageNe
 
 L'entraînement a réalisé **9 époques complètes** avant d'être interrompu pendant la 10e époque par la limite de temps Slurm.
 
-## 4.2 — Question 1 : Profilage temporel et matériel
+## 4.2 - Question 1 : Profilage temporel et matériel
 
 Chaque époque comporte 5005 batches pour traiter environ 1,28 million d'images.
 
@@ -437,7 +437,7 @@ $$
 
 Il faudrait donc environ **42 heures et 20 minutes** pour terminer 100 époques, sans compter les temps d'attente entre les jobs Slurm.
 
-## 4.3 — Question 2 : Analyse de l'entraînement
+## 4.3 - Question 2 : Analyse de l'entraînement
 
 ### Résultats expérimentaux
 
@@ -494,7 +494,7 @@ Les courbes suivantes présentent les évolutions des pertes et des accuracies d
 ![TensorBoard AlexNet ImageNet complet](images/img/loss_full.png)
 
 
-## 4.4 — Question 3 : Pourquoi la validation loss est-elle inférieure à la train loss ?
+## 4.4 - Question 3 : Pourquoi la validation loss est-elle inférieure à la train loss ?
 
 Pendant les premières époques, la validation loss est inférieure à la train loss.
 
@@ -520,7 +520,7 @@ Enfin, la train loss est calculée pendant la mise à jour progressive des poids
 
 Ces différences peuvent expliquer pourquoi la validation loss est inférieure à la train loss, sans que cela indique une erreur d'entraînement.
 
-## 4.5 — Conclusion
+## 4.5 - Conclusion
 
 L'entraînement sur ImageNet complet a permis d'améliorer nettement les performances d'AlexNet par rapport au sous-ensemble de 20 000 images.
 
