@@ -1,12 +1,12 @@
 
-# CSC8607 — Introduction au Deep Learning
-## TP4 — Réseaux récurrents et génération musicale
+# CSC8607 -Introduction au Deep Learning
+## TP4 -Réseaux récurrents et génération musicale
 
-## Exercice 1 — Exploration et prétraitement
+## Exercice 1 -Exploration et prétraitement
 
-### Étape 1 — Chargement et découverte des données
+### Étape 1 -Chargement et découverte des données
 
-#### Question 1 — Nombre de partitions
+#### Question 1 -Nombre de partitions
 
 Le dataset contient :
 - **214 122 partitions d'entraînement**.
@@ -14,7 +14,7 @@ Le dataset contient :
 
 Les données sont chargées à partir des fichiers JSON avec `json.load()`.
 
-#### Question 2 — Analyse de la première partition ABC
+#### Question 2 -Analyse de la première partition ABC
 
 La première partition contient les métadonnées suivantes :
 
@@ -35,9 +35,9 @@ La notation ABC permet de représenter une partition musicale
 sous une forme textuelle compacte.
 
 
-### Étape 2 — Construction du vocabulaire et Padding
+### Étape 2 -Construction du vocabulaire et Padding
 
-#### Question 1 — Statistiques du dataset
+#### Question 1 -Statistiques du dataset
 
 Le dataset contient :
 - **95 caractères uniques** dans le vocabulaire.
@@ -47,7 +47,7 @@ Le dataset contient :
 Le vocabulaire est construit à partir des caractères uniques
 présents dans les partitions d'entraînement et de validation.
 
-#### Question 2 — Pourquoi utiliser sorted() ?
+#### Question 2 -Pourquoi utiliser sorted() ?
 
 La fonction `sorted()` garantit un ordre fixe des caractères
 dans le vocabulaire.
@@ -56,7 +56,7 @@ Sans ce tri, les indices associés aux caractères pourraient
 changer entre deux exécutions, ce qui poserait problème
 lors du chargement d'un modèle sauvegardé.
 
-#### Question 3 — Pourquoi choisir SEQ_LENGTH = 500 ?
+#### Question 3 -Pourquoi choisir SEQ_LENGTH = 500 ?
 
 Une longueur fixe de 500 caractères permet de limiter
 le temps de calcul et la consommation de mémoire GPU.
@@ -70,11 +70,11 @@ entre la conservation des informations musicales
 et l'efficacité de l'entraînement.
 
 
-## Exercice 2 — Dataset PyTorch et Modélisation
+## Exercice 2 -Dataset PyTorch et Modélisation
 
-### Étape 1 — Création du MusicDataset
+### Étape 1 -Création du MusicDataset
 
-#### Question 1 — Dimensions des tenseurs et type de données
+#### Question 1 -Dimensions des tenseurs et type de données
 
 Avec `SEQ_LENGTH = 500` et `BATCH_SIZE = 128`,
 les dimensions obtenues sont :
@@ -97,9 +97,9 @@ et non des nombres flottants (`torch.float32`).
 
 
 
-### Étape 2 — Architecture récurrente (RNN vs LSTM)
+### Étape 2 -Architecture récurrente (RNN vs LSTM)
 
-#### Question 1 — Calcul du nombre de paramètres
+#### Question 1 -Calcul du nombre de paramètres
 
 Avec `vocab_size = 95`, `embedding_dim = 256`
 et `hidden_size = 512` :
@@ -144,7 +144,7 @@ quatre fois plus de paramètres que celui du RNN,
 car il utilise quatre transformations distinctes,
 chacune avec ses propres poids et ses deux biais.
 
-#### Question 2 — Pourquoi utiliser nn.Embedding ?
+#### Question 2 -Pourquoi utiliser nn.Embedding ?
 
 La couche `nn.Embedding` associe à chaque caractère
 un vecteur de caractéristiques appris pendant
@@ -157,7 +157,7 @@ entre les caractères.
 Elle permet au modèle d'apprendre des représentations
 plus adaptées aux relations entre les symboles musicaux.
 
-#### Question 3 — Différence entre hidden_state du RNN et du LSTM
+#### Question 3 -Différence entre hidden_state du RNN et du LSTM
 
 Dans un RNN classique, `hidden_state` contient
 uniquement l'état caché `h_t`, qui représente
@@ -178,9 +178,9 @@ le problème du vanishing gradient.
 
 
 
-## Exercice 3 — Entraînement et dynamique des gradients
+## Exercice 3 -Entraînement et dynamique des gradients
 
-### Question 1 — Redimensionnement des tenseurs
+### Question 1 -Redimensionnement des tenseurs
 
 Le modèle produit un tenseur de logits de dimensions
 `(128, 499, 95)`.
@@ -202,7 +202,7 @@ La dimension `-1` correspond ici à :
 Cela permet de calculer la perte de classification
 sur tous les caractères du batch.
 
-### Question 2 — Ordre du Gradient Clipping
+### Question 2 -Ordre du Gradient Clipping
 
 La fonction `clip_grad_norm_` doit être appelée après
 `loss.backward()`, car les gradients doivent d'abord
@@ -218,7 +218,7 @@ notamment pour les RNN sur de longues séquences.
 
 
 
-### Expérience 1 — RNN sans Gradient Clipping
+### Expérience 1 -RNN sans Gradient Clipping
 
 **Configuration :**
 - Modèle : RNN
@@ -260,7 +260,7 @@ avant cette dégradation.
 
 
 
-### Expérience 2 — RNN avec Gradient Clipping
+### Expérience 2 -RNN avec Gradient Clipping
 
 **Configuration :**
 - Modèle : RNN
@@ -299,7 +299,7 @@ Le clipping limite la norme des gradients à 1.0
 avant la mise à jour des paramètres, ce qui aide
 à stabiliser l'apprentissage.
 
-### Comparaison — RNN sans et avec Gradient Clipping
+### Comparaison -RNN sans et avec Gradient Clipping
 
 | Indicateur | Sans clipping | Avec clipping |
 |---|---:|---:|
@@ -320,7 +320,7 @@ pour limiter les instabilités des réseaux récurrents.
 
 
 
-### Expérience 3 — LSTM avec Gradient Clipping
+### Expérience 3 -LSTM avec Gradient Clipping
 
 **Configuration :**
 - Modèle : LSTM
@@ -384,7 +384,7 @@ du LSTM pour modéliser des séquences musicales.
 
 
 
-### Analyse expérimentale — TensorBoard
+### Analyse expérimentale -TensorBoard
 
 
 #### Accuracy de validation
@@ -396,7 +396,7 @@ du LSTM pour modéliser des séquences musicales.
 ![Comparaison des normes des gradients](images/gradnorm.png)
 
 
-### Question 4 — Impact du padding sur l'Accuracy
+### Question 4 -Impact du padding sur l'Accuracy
 
 Une partition de 250 caractères est complétée avec
 250 espaces pour atteindre SEQ_LENGTH = 500.
@@ -429,9 +429,9 @@ l'Accuracy pour obtenir une métrique plus représentative.
 
 
 
-## Exercice 4 — Génération musicale
+## Exercice 4 -Génération musicale
 
-### Étape 1 — Génération auto-régressive
+### Étape 1 -Génération auto-régressive
 
 Nous utilisons le meilleur modèle LSTM entraîné
 lors de l'exercice 3.
@@ -444,7 +444,7 @@ Ce modèle a obtenu :
 La génération est réalisée caractère par caractère
 à partir d'une amorce musicale au format ABC.
 
-#### Question 1 — Pourquoi conserver hidden_state ?
+#### Question 1 -Pourquoi conserver hidden_state ?
 
 La conservation de `hidden_state` permet au LSTM
 de mémoriser les informations de la séquence
@@ -457,7 +457,7 @@ nouveau caractère, ce qui serait plus coûteux.
 Avec la conservation de l'état caché, chaque
 nouveau caractère nécessite un seul pas de calcul.
 
-#### Question 2 — Influence de la température
+#### Question 2 -Influence de la température
 
 La température modifie la distribution des
 probabilités calculée par Softmax.
@@ -476,7 +476,7 @@ d'un choix glouton du caractère le plus probable.
 Une température très élevée produit une
 distribution de probabilités presque uniforme.
 
-#### Question 3 — Influence de la température
+#### Question 3 -Influence de la température
 
 Nous avons utilisé le meilleur modèle LSTM obtenu lors
 de l'exercice 3 pour générer 300 caractères supplémentaires
@@ -574,7 +574,7 @@ K:D
 ![.](images/image2.png)
 
 
-### Étape 2 — Entraînement long avec Slurm
+### Étape 2 -Entraînement long avec Slurm
 
 #### Configuration
 
